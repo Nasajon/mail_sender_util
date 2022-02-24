@@ -6,21 +6,21 @@ from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from mail_sender_util.exception import TLSVersionMissingExcpetion
+from mail_sender_util.exception import TLSVersionMissingExcpetion, TLSVersionNotSupported
 from smtplib import SMTP, SMTP_SSL
 from typing import Any, Dict, List, Tuple
 
 
 class CryptMethod(enum.Enum):
-    NONE = 0
-    SSL_OR_TLS = 1
-    START_TLS = 2
+    NONE = 'null'
+    SSL_OR_TLS = 'ssl_tls'
+    START_TLS = 'start_tls'
 
 
 class TLSVersion(enum.Enum):
-    TLS_1_0 = ssl.PROTOCOL_TLSv1
-    TLS_1_1 = ssl.PROTOCOL_TLSv1_1
-    TLS_1_2 = ssl.PROTOCOL_TLSv1_2
+    TLS_1_0 = 'v1.0'
+    TLS_1_1 = 'v1.1'
+    TLS_1_2 = 'v1.2'
 
 
 class MailSender:
@@ -63,7 +63,7 @@ class MailSender:
         self.tls_version = tls_version
 
         if crypt_method is not None and crypt_method != CryptMethod.NONE and tls_version is None:
-            raise TLSVersionMissingExcpetion()
+            raise TLSVersionMissingExcpetion('Faltando parâmetro: tls_version')
 
     def enviar(
         self,
@@ -73,7 +73,7 @@ class MailSender:
         msg_html: str,
         dest_copia: List[str] = None,
         dest_copia_oculta: List[str] = None,
-        images: List[Tuple[str, str]] = None,
+        imagens: List[Tuple[str, str]] = None,
         anexos: List[Tuple[str, str]] = None
     ) -> None:
         """
@@ -82,7 +82,7 @@ class MailSender:
         :remetente: Remetente da mensagem a ser enviada por e-mail
         :destinatarios: Lista de destinatátios da mensagem
         :msg_html: Mensagem em formato html a ser enviada por e-mail
-        :imagem: Lista de imagens a serem enviadas como partes do corpo da mensagem. Cada imagem é uma tupla, onde a primeira posição contem o ID da imagem (referido no HTML, por uma tag img similar a: <img src="cid:image1">), e a segunda posição contém o path em disco da imagem.
+        :imagens: Lista de imagens a serem enviadas como partes do corpo da mensagem. Cada imagem é uma tupla, onde a primeira posição contem o ID da imagem (referido no HTML, por uma tag img similar a: <img src="cid:image1">), e a segunda posição contém o path em disco da imagem.
         :anexos: Lista de arquivos para anexar no e-mail. Cada anexo é uma tupla, onde a primeira posição contem o nome do arquivo a ser exibido no e-mail, e a segunda posição contém o path em disco do anexo.
         """
 
@@ -100,17 +100,17 @@ class MailSender:
         if dest_copia_oculta is not None:
             mail['dest_copia_oculta'] = dest_copia_oculta,
 
-        if images is not None:
+        if imagens is not None:
             image_list = []
 
-            for imagem in images:
+            for imagem in imagens:
                 img = {
                     'id': imagem[0],
                     'path': imagem[1]
                 }
                 image_list.append(img)
 
-            mail['images'] = image_list
+            mail['imagens'] = image_list
 
         if anexos is not None:
             anexo_list = []
@@ -143,7 +143,7 @@ class MailSender:
         :msg_html: Mensagem em formato html a ser enviada por e-mail
         :dest_copia: Lista de stings, representando os destinatátios em cópia, na mensagem
         :dest_copia_oculta: Lista de stings, representandoos  destinatátios em cópia oculta, na mensagem (não visíveis pelos destinatários diretos)
-        :imagem: Lista de dicionários, representando as imagens a serem enviadas como partes do corpo da mensagem. Cada dicionário de imagem contém os parâmetros: "id", que representa o ID da imagem (referido no HTML, por uma tag img similar a: <img src="cid:image1">); e "path", que contém o path em disco da imagem.
+        :imagens: Lista de dicionários, representando as imagens a serem enviadas como partes do corpo da mensagem. Cada dicionário de imagem contém os parâmetros: "id", que representa o ID da imagem (referido no HTML, por uma tag img similar a: <img src="cid:image1">); e "path", que contém o path em disco da imagem.
         :anexos: Lista de dicionários, representanto os arquivos para anexar no e-mail. Cada dicionário contém os parâmetros: "file_name" com o nome do arquivo a ser exibido no e-mail; e "path", com o caminho em disco do anexo.
         """
 
@@ -168,8 +168,8 @@ class MailSender:
 
             # Adicionando as imagens como partes MIME no mensagem de e-mail:
             # Onde o ID de cada parte é de acordo com a tupla da imagem, o caminho também
-            if 'images' in mail_msg:
-                for image in mail_msg['images']:
+            if 'imagens' in mail_msg:
+                for image in mail_msg['imagens']:
                     with open(image['path'], 'rb') as file:
                         msgImage = MIMEImage(file.read())
 
@@ -192,14 +192,27 @@ class MailSender:
 
             msgs_multipart.append(msg)
 
+        # Resolvendo versão TLS
+        tls_version = None
+        if self.tls_version is not None:
+            if self.tls_version == TLSVersion.TLS_1_0:
+                tls_version = ssl.PROTOCOL_TLSv1
+            elif self.tls_version == TLSVersion.TLS_1_1:
+                tls_version = ssl.PROTOCOL_TLSv1_1
+            elif self.tls_version == TLSVersion.TLS_1_2:
+                tls_version = ssl.PROTOCOL_TLSv1_2
+            else:
+                raise TLSVersionNotSupported(
+                    f'Versão TLS não suportada ou identificada: {self.tls_version}')
+
+        ctx = None
+        if self.tls_version is not None:
+            ctx = ssl.SSLContext(tls_version)
+
         # Enviando o e-mail
         smtp_obj = None
         try:
             # Estabelecendo a conexão
-            ctx = None
-            if self.tls_version is not None:
-                ctx = ssl.SSLContext(self.tls_version.value)
-
             if self.crypt_method is not None and self.crypt_method == CryptMethod.SSL_OR_TLS:
                 smtp_obj = SMTP_SSL(host=self.smtp_host,
                                     port=self.smtp_port, context=ctx)
