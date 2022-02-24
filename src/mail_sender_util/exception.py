@@ -1,0 +1,2 @@
+class TLSVersionMissingExcpetion(Exception):
+    pass
