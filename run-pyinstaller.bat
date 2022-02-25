@@ -1,0 +1,1 @@
+pyinstaller --onefile --console ./mail_sender_util/mail_cmd.py
