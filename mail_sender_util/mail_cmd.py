@@ -60,57 +60,54 @@ def validar_entrada(entrada: Dict[str, Any], erros_msg: Dict[int, List[str]]):
 
 
 def enviar_emails(entrada: Dict[str, Any]):
+    erros_msg = {}
     try:
-        erros_msg = {}
-        try:
-            # Validando entrada
-            validar_entrada(entrada, erros_msg)
+        # Validando entrada
+        validar_entrada(entrada, erros_msg)
 
-            if -1 in erros_msg:
-                raise ParametrosGeraisIncorretosException()
+        if -1 in erros_msg:
+            raise ParametrosGeraisIncorretosException()
 
-            # Instanciando o MailsSneder
-            tls_version = None
-            if 'tls_version' in entrada:
-                tls_version = TLSVersion(entrada.get('tls_version'))
+        # Instanciando o MailsSneder
+        tls_version = None
+        if 'tls_version' in entrada:
+            tls_version = TLSVersion(entrada.get('tls_version'))
 
-            sender = MailSender(
-                entrada['host'],
-                entrada['port'],
-                entrada['user'],
-                entrada['password'],
-                CryptMethod(entrada.get('crypt_method')),
-                tls_version
-            )
+        sender = MailSender(
+            entrada['host'],
+            entrada['port'],
+            entrada['user'],
+            entrada['password'],
+            CryptMethod(entrada.get('crypt_method')),
+            tls_version
+        )
 
-            # Enviando mensagem
-            sender.enviar_lista(entrada['emails'], erros_msg)
-        except ParametrosGeraisIncorretosException as e:
-            # Basta suprimir, pois é impresso a seguir
-            pass
-        except TLSVersionMissingExcpetion as e:
-            erros = erros_msg.setdefault(-1, [])
-            erros.append(str(e))
-        except Exception as e:
-            erros = erros_msg.setdefault(-1, [])
-            erros.append(
-                f'Erro desconhecido ao enviar e-mails. Mensagem original do erro: {e}')
-
-        if len(erros_msg) > 0:
-            print(formata_erros(erros_msg))
-            sys.exit(1)
-        else:
-            print('ok')
-            sys.exit(0)
+        # Enviando mensagem
+        sender.enviar_lista(entrada['emails'], erros_msg)
+    except ParametrosGeraisIncorretosException as e:
+        # Basta suprimir, pois é impresso a seguir
+        pass
+    except TLSVersionMissingExcpetion as e:
+        erros = erros_msg.setdefault(-1, [])
+        erros.append(str(e))
     except Exception as e:
-        print(f'Erro fatal não identificado. Mensagem original do erro {e}')
-        sys.exit(5)
+        erros = erros_msg.setdefault(-1, [])
+        erros.append(
+            f'Erro desconhecido ao enviar e-mails. Mensagem original do erro: {e}')
+
+    if len(erros_msg) > 0:
+        print(formata_erros(erros_msg))
+        sys.exit(1)
+    else:
+        print('ok')
+        sys.exit(0)
 
 
 def main():
-    # Initialize parser
-    parser = argparse.ArgumentParser(
-        description="""
+    try:
+        # Initialize parser
+        parser = argparse.ArgumentParser(
+            description="""
 Utilitário para envio de e-mails por linha de comando.
 
 Para uso, enviei um JSON contendo:
@@ -156,16 +153,19 @@ Exemplode mensagem:
 }"
 """)
 
-    # Adding optional argument
-    parser.add_argument(
-        "-j", "--json", help="JSON de entrada, com os parâmetros necessários ao envio do e-mail")
+        # Adding optional argument
+        parser.add_argument(
+            "-j", "--json", help="JSON de entrada, com os parâmetros necessários ao envio do e-mail")
 
-    # Read arguments from command line
-    args = parser.parse_args()
+        # Read arguments from command line
+        args = parser.parse_args()
 
-    if args.json is not None:
-        entrada = json_util.json_loads(args.json)
-        enviar_emails(entrada)
+        if args.json is not None:
+            entrada = json_util.json_loads(args.json)
+            enviar_emails(entrada)
+    except Exception as e:
+        print(f'Erro fatal não identificado. Mensagem original do erro {e}')
+        sys.exit(5)
 
 
 if __name__ == '__main__':
