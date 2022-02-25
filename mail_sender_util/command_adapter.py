@@ -2,49 +2,109 @@ import argparse
 import sys
 
 from mail_sender_util.mail_sender import CryptMethod, MailSender, TLSVersion
-from mail_sender_util.exception import MailSenderException, MissingParameter
+from mail_sender_util.exception import TLSVersionMissingExcpetion, ParametrosGeraisIncorretosException
 from nsj_gcf_utils import json_util
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 
-def validar_entrada(entrada: Dict[str, Any]):
+def formata_erros(erros_msg: Dict[int, List[str]]):
+    erros = {}
+
+    if -1 in erros_msg:
+        erros['erros_gerais'] = erros_msg[-1]
+        del erros_msg[-1]
+
+    if len(erros_msg) > 0:
+        erros['erros_mensagens'] = erros_msg
+
+    return json_util.json_dumps(erros)
+
+
+def validar_entrada(entrada: Dict[str, Any], erros_msg: Dict[int, List[str]]):
     # Validando parâmetros de conexão
     pars = ['host', 'port', 'user', 'password', 'crypt_method', 'emails']
     for par in pars:
         if not par in entrada:
-            raise MissingParameter(f'Faltando parâmetro: {par}')
+            erros = erros_msg.setdefault(-1, [])
+            erros.append(f'Faltando parâmetro: {par}')
+
+    if 'crypt_method' in entrada:
+        try:
+            CryptMethod(entrada.get('crypt_method')),
+        except Exception as e:
+            erros = erros_msg.setdefault(-1, [])
+            erros.append(
+                f"Parâmetro crypt_method inválido: {entrada.get('crypt_method')}")
+
+    if 'tls_version' in entrada:
+        try:
+            TLSVersion(entrada.get('tls_version'))
+        except Exception as e:
+            erros = erros_msg.setdefault(-1, [])
+            erros.append(
+                f"Parâmetro tls_version inválido: {entrada.get('tls_version')}")
 
     # Validando parâmetros das mensagens
-    for email in entrada['emails']:
+    if not('emails' in entrada):
+        return
+
+    for i in range(0, len(entrada['emails'])):
+        email = entrada['emails'][i]
+
         pars = ['assunto', 'remetente', 'destinatarios', 'msg_html']
         for par in pars:
             if not par in email:
-                raise MissingParameter(
-                    f'Faltando parâmetro: {par}; no escopo do e-mail: {email}')
+                erros = erros_msg.setdefault(i, [])
+                erros.append(
+                    f'Faltando parâmetro: {par}')
 
 
 def enviar_emails(entrada: Dict[str, Any]):
     try:
-        # Validando entrada
-        validar_entrada(entrada)
+        erros_msg = {}
+        try:
+            # Validando entrada
+            validar_entrada(entrada, erros_msg)
 
-        # Instanciando o MailsSneder
-        sender = MailSender(
-            entrada['host'],
-            entrada['port'],
-            entrada['user'],
-            entrada['password'],
-            CryptMethod(entrada.get('crypt_method')),
-            TLSVersion(entrada.get('tls_version'))
-        )
+            if -1 in erros_msg:
+                raise ParametrosGeraisIncorretosException()
 
-        # Enviando mensagem
-        sender.enviar_lista(entrada['emails'])
+            # Instanciando o MailsSneder
+            tls_version = None
+            if 'tls_version' in entrada:
+                tls_version = TLSVersion(entrada.get('tls_version'))
 
-        sys.exit(0)
-    except MailSenderException as e:
-        print(str(e))
-        sys.exit(e.error_code)
+            sender = MailSender(
+                entrada['host'],
+                entrada['port'],
+                entrada['user'],
+                entrada['password'],
+                CryptMethod(entrada.get('crypt_method')),
+                tls_version
+            )
+
+            # Enviando mensagem
+            sender.enviar_lista(entrada['emails'], erros_msg)
+        except ParametrosGeraisIncorretosException as e:
+            # Basta suprimir, pois é impresso a seguir
+            pass
+        except TLSVersionMissingExcpetion as e:
+            erros = erros_msg.setdefault(-1, [])
+            erros.append(str(e))
+        except Exception as e:
+            erros = erros_msg.setdefault(-1, [])
+            erros.append(
+                f'Erro desconhecido ao enviar e-mails. Mensagem original do erro: {e}')
+
+        if len(erros_msg) > 0:
+            print(formata_erros(erros_msg))
+            sys.exit(1)
+        else:
+            print('ok')
+            sys.exit(0)
+    except Exception as e:
+        print(f'Erro fatal não identificado. Mensagem original do erro {e}')
+        sys.exit(5)
 
 
 def main():

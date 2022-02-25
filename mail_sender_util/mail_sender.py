@@ -6,8 +6,8 @@ from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from mail_sender_util.exception import TLSVersionMissingExcpetion, TLSVersionNotSupported
-from smtplib import SMTP, SMTP_SSL
+from mail_sender_util.exception import TLSVersionMissingExcpetion
+from smtplib import SMTP, SMTP_SSL, SMTPRecipientsRefused, SMTPSenderRefused
 from typing import Any, Dict, List, Tuple
 
 
@@ -67,6 +67,7 @@ class MailSender:
 
     def enviar(
         self,
+        erros_msgs: Dict[int, List[str]],
         assunto: str,
         remetente: str,
         destinatarios: List[str],
@@ -126,12 +127,14 @@ class MailSender:
 
         # Enviando
         self.enviar(
-            [mail]
+            [mail],
+            erros_msgs
         )
 
     def enviar_lista(
         self,
-        mail_msgs: List[Dict[str, Any]]
+        mail_msgs: List[Dict[str, Any]],
+        erros_msgs: Dict[int, List[str]]
     ) -> None:
         """
         Método capaz de enviar uma lista de e-mails em formato HTML.
@@ -148,49 +151,82 @@ class MailSender:
         """
 
         # Convertendo as mensagens
-        msgs_multipart = []
-        for mail_msg in mail_msgs:
+        msgs_multipart = {}
+        for i in range(0, len(mail_msgs)):
+            try:
+                # Pulando a mensagem, se já foram identificados erros anteriores de composição da mesma
+                if i in erros_msgs:
+                    continue
 
-            # Construindo o e-mail
-            msg = MIMEMultipart()
+                mail_msg = mail_msgs[i]
 
-            msg['From'] = mail_msg['remetente']
-            msg['To'] = ', '.join(mail_msg['destinatarios'])
-            msg['Subject'] = mail_msg['assunto']
+                # Construindo o e-mail
+                msg = MIMEMultipart()
 
-            if 'dest_copia' in mail_msg:
-                msg['Cc'] = ', '.join(mail_msg['dest_copia'])
+                msg['From'] = mail_msg['remetente']
+                msg['To'] = ', '.join(mail_msg['destinatarios'])
+                msg['Subject'] = mail_msg['assunto']
 
-            if 'dest_copia_oculta' in mail_msg:
-                msg['Bcc'] = ', '.join(mail_msg['dest_copia_oculta'])
+                if 'dest_copia' in mail_msg:
+                    msg['Cc'] = ', '.join(mail_msg['dest_copia'])
 
-            msg.attach(MIMEText(mail_msg['msg_html'], 'html'))
+                if 'dest_copia_oculta' in mail_msg:
+                    msg['Bcc'] = ', '.join(mail_msg['dest_copia_oculta'])
 
-            # Adicionando as imagens como partes MIME no mensagem de e-mail:
-            # Onde o ID de cada parte é de acordo com a tupla da imagem, o caminho também
-            if 'imagens' in mail_msg:
-                for image in mail_msg['imagens']:
-                    with open(image['path'], 'rb') as file:
-                        msgImage = MIMEImage(file.read())
+                msg.attach(MIMEText(mail_msg['msg_html'], 'html'))
 
-                    msgImage.add_header(
-                        'Content-ID', '<{}>'.format(image['id']))
-                    msg.attach(msgImage)
+                # Adicionando as imagens como partes MIME no mensagem de e-mail:
+                # Onde o ID de cada parte é de acordo com a tupla da imagem, o caminho também
+                if 'imagens' in mail_msg:
+                    for image in mail_msg['imagens']:
 
-            # Adicionando os anexos como partes MIME na mensagem de e-mail:
-            if 'anexos' in mail_msg:
-                for anexo in mail_msg['anexos']:
-                    msgAnexo = MIMEBase('application', 'octet-stream')
+                        try:
+                            with open(image['path'], 'rb') as file:
+                                msgImage = MIMEImage(file.read())
+                        except FileNotFoundError as e:
+                            erros = erros_msgs.setdefault(i, [])
+                            erros.append(
+                                f"Imagem não encontrada no caminho: {image['path']}. Mensagem original do erro: {e}")
+                            continue
+                        except Exception as e:
+                            erros = erros_msgs.setdefault(i, [])
+                            erros.append(
+                                f"Erro de leitura da imagem no caminho: {image['path']}. Mensagem original do erro: {e}")
+                            continue
 
-                    with open(anexo['path'], 'rb') as file:
-                        msgAnexo.set_payload(file.read())
+                        msgImage.add_header(
+                            'Content-ID', '<{}>'.format(image['id']))
+                        msg.attach(msgImage)
 
-                    encoders.encode_base64(msgAnexo)
-                    msgAnexo.add_header(
-                        'Content-Disposition', "attachment; filename= {}".format(anexo['file_name']))
-                    msg.attach(msgAnexo)
+                # Adicionando os anexos como partes MIME na mensagem de e-mail:
+                if 'anexos' in mail_msg:
+                    for anexo in mail_msg['anexos']:
+                        msgAnexo = MIMEBase('application', 'octet-stream')
 
-            msgs_multipart.append(msg)
+                        try:
+                            with open(anexo['path'], 'rb') as file:
+                                msgAnexo.set_payload(file.read())
+                        except FileNotFoundError as e:
+                            erros = erros_msgs.setdefault(i, [])
+                            erros.append(
+                                f"Anexo não encontrada no caminho: {anexo['path']}. Mensagem original do erro: {e}")
+                            continue
+                        except Exception as e:
+                            erros = erros_msgs.setdefault(i, [])
+                            erros.append(
+                                f"Erro de leitura do anexo no caminho: {anexo['path']}. Mensagem original do erro: {e}")
+                            continue
+
+                        encoders.encode_base64(msgAnexo)
+                        msgAnexo.add_header(
+                            'Content-Disposition', "attachment; filename= {}".format(anexo['file_name']))
+                        msg.attach(msgAnexo)
+
+                msgs_multipart[i] = msg
+            except Exception as e:
+                erros = erros_msgs.setdefault(i, [])
+                erros.append(
+                    f"Erro desconhecido no preparo da mensagem. Mensagem original do erro: {e}")
 
         # Resolvendo versão TLS
         tls_version = None
@@ -202,34 +238,71 @@ class MailSender:
             elif self.tls_version == TLSVersion.TLS_1_2:
                 tls_version = ssl.PROTOCOL_TLSv1_2
             else:
-                raise TLSVersionNotSupported(
-                    f'Versão TLS não suportada ou identificada: {self.tls_version}')
+                erros = erros_msgs.setdefault(-1, [])
+                erros.append(
+                    f"Versão TLS não suportada ou identificada: {self.tls_version}")
+                return
 
         ctx = None
         if self.tls_version is not None:
             ctx = ssl.SSLContext(tls_version)
 
-        # Enviando o e-mail
+        # Enviando os e-mails
         smtp_obj = None
         try:
             # Estabelecendo a conexão
-            if self.crypt_method is not None and self.crypt_method == CryptMethod.SSL_OR_TLS:
-                smtp_obj = SMTP_SSL(host=self.smtp_host,
-                                    port=self.smtp_port, context=ctx)
-            else:
-                smtp_obj = SMTP(host=self.smtp_host,
-                                port=self.smtp_port)
+            try:
+                if self.crypt_method is not None and self.crypt_method == CryptMethod.SSL_OR_TLS:
+                    smtp_obj = SMTP_SSL(host=self.smtp_host,
+                                        port=self.smtp_port, context=ctx)
+                else:
+                    smtp_obj = SMTP(host=self.smtp_host,
+                                    port=self.smtp_port)
 
-            smtp_obj.ehlo()
-            if self.crypt_method is not None and self.crypt_method == CryptMethod.START_TLS:
-                smtp_obj.starttls(context=ctx)
+                smtp_obj.ehlo()
+                if self.crypt_method is not None and self.crypt_method == CryptMethod.START_TLS:
+                    smtp_obj.starttls(context=ctx)
+            except Exception as e:
+                erros = erros_msgs.setdefault(-1, [])
+                erros.append(
+                    f"Erro estabelecendo conexão com o servidor. Verifique dados de conexão e criptografia. Mensagem original do erro: {e}")
+                return
 
             # Autenticando
-            smtp_obj.login(self.smtp_user, self.smtp_pass)
+            try:
+                smtp_obj.login(self.smtp_user, self.smtp_pass)
+            except Exception as e:
+                erros = erros_msgs.setdefault(-1, [])
+                erros.append(
+                    f"Erro de autenticação com o servidor de e-mail. Verifique o usuário e senha passados. Mensagem original do erro: {e}")
+                return
 
             # Enviando as mensagens
-            for msg in msgs_multipart:
-                smtp_obj.send_message(msg)
+            for i in msgs_multipart:
+                msg = msgs_multipart[i]
+                try:
+                    # Pulando a mensagem, se já foram identificados erros anteriores de composição da mesma
+                    if i in erros_msgs:
+                        continue
+
+                    # Enviando o e-mail de fato
+                    smtp_obj.send_message(msg)
+                except SMTPRecipientsRefused as e:
+                    erros = erros_msgs.setdefault(i, [])
+                    erros.append(
+                        f"Um ou mais destinatário não identificados: {e.recipients}. Mensagem original do erro: {e}")
+                    continue
+                except SMTPSenderRefused as e:
+                    erros = erros_msgs.setdefault(i, [])
+                    erros.append(
+                        f"Remetente não identificado: {msg['From']}. Mensagem original do erro: {e}")
+                    continue
+                except Exception as e:
+                    erros = erros_msgs.setdefault(i, [])
+                    erros.append(
+                        f"Erro desconhecido ao enviar a mensagem. Verifique o remetente e os destinatários passados. Mensagem original do erro: {e}")
+                    continue
+
         finally:
             # Finalizando a conexão
             if smtp_obj is not None:
@@ -245,38 +318,3 @@ class GmailSender(MailSender):
     ):
         super().__init__('smtp.gmail.com', '465', gmail_user,
                          gmail_pass, CryptMethod.SSL_OR_TLS, TLSVersion.TLS_1_2)
-
-
-if __name__ == '__main__':
-    # mail = MailSender('smtp.office365.com', '587',
-    #                   'sergio.rocha.silva@outlook.com', '*******', CryptMethod.START_TLS, TLSVersion.TLS_1_2)
-    # mail.enviar('Teste2', 'sergio.rocha.silva@outlook.com',
-    #             ['sergiosilva@nasajon.com.br'], 'teste')
-
-    # mail = GmailSender('ana@nasajon.com.br', '***********')
-    # mail.enviar('Teste', 'ana@nasajon.com.br',
-    #             ['sergiosilva@nasajon.com.br'], 'teste')
-
-    # TODO Linha de comando
-    # TODO Empacotamento
-
-    mail1 = {
-        'assunto': 'Teste 1',
-        'remetente': 'ana@nasajon.com.br',
-        'destinatarios': ['sergiosilva@nasajon.com.br'],
-        'msg_html': 'Teste 1'
-    }
-
-    mail2 = {
-        'assunto': 'Teste 3',
-        'remetente': 'ana@nasajon.com.br',
-        'destinatarios': ['sergiosilva@nasajon.com.br'],
-        'msg_html': 'Teste 3',
-        'dest_copia': ['sergio.confidencial@gmail.com'],
-        'dest_copia_oculta': ['sergio.confidencial@outlook.com']
-    }
-
-    mails = [mail1, mail2]
-
-    sender = GmailSender('ana@nasajon.com.br', '*********')
-    sender.enviar_lista(mails)
