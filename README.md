@@ -166,3 +166,7 @@ end;
 ```
 
 **Para correto funcionamento do wrapper, é preciso garantir que o executável  "mail_cmd.exe" esteja contido no diretório ```nsbin```.**
+
+## Logs
+
+O envio de e-mails registra logs, na tabela ```mail_sender_util``` do schema ```logs```.
