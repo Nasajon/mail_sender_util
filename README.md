@@ -5,6 +5,8 @@ Este utilitário foi desenvolvido por conta da necessidade de atualizar a versã
 
 Se optou pelo uso da linguagem Python, e pelo fornecimento de um executável, porque está sendo estudada a possibilidade de realizar todos os novos desenvolvimentos do dektop já em python, para permitir reaproveitamento de código para o ERP 4 (WEB).
 
+Obs.: Esta documentação pressupõe que o programador esteja utilizado ambiente Windows (visto que se destina à integração com o ERP Desktop).
+
 ## Ambiente de Desenvolvimento
 
 Siga os passos abaixo para montar o ambiente de desenvolvimento (pré requisito: Python 3.9.5, ou superior, e VSCode instalados):
@@ -115,6 +117,14 @@ No caso de erro conhecido, o JSON de erros segue o padrão abaixo:
 }
 ```
 
+## Empacotando num Executável
+
+O PyInstaller é a ferramenta utilizada para empactar este utilitário num executável stand alone (que pode ser usado sem instalação do Python na máquina cliente).
+
+Para gerar o exe, rode o comando:
+
+> run-pyinstaller.bat
+
 ## Wrapper Delphi
 
 Adicionalmente ao comando, foi desenvolvido um utilitário do tipo wrapper, para uso do mesmo por meio de sistemas Delphi.
@@ -165,7 +175,7 @@ begin
 end;
 ```
 
-**Para correto funcionamento do wrapper, é preciso garantir que o executável  "mail_cmd.exe" esteja contido no diretório ```nsbin```.**
+**Para correto funcionamento do wrapper, é preciso garantir que o executável "mail_cmd.exe" esteja contido no diretório ```nsbin```. O qual pode ser [encontrado aqui.](https://github.com/Nasajon/mail_sender_util/releases/tag/v0.0.1)**
 
 ## Logs
 
