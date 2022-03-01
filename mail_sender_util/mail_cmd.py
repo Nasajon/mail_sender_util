@@ -103,6 +103,11 @@ def enviar_emails(entrada: Dict[str, Any]):
         sys.exit(0)
 
 
+def internal_main(json: str):
+    entrada = json_util.json_loads(json)
+    enviar_emails(entrada)
+
+
 def main():
     try:
         # Initialize parser
@@ -131,7 +136,7 @@ Cada mesnagem deve conter:
 
 Sendo que os parâmetros "dest_copia", "dest_copia_oculta", "imagens" e "anexos" são todos opcionais.
 
-Exemplode mensagem:
+Exemplo de mensagem:
 "{
     "usuario": "teste@teste.com",
     "senha": "123456",
@@ -161,8 +166,7 @@ Exemplode mensagem:
         args = parser.parse_args()
 
         if args.json is not None:
-            entrada = json_util.json_loads(args.json)
-            enviar_emails(entrada)
+            internal_main(args.json)
     except Exception as e:
         print(f'Erro fatal não identificado. Mensagem original do erro {e}')
         sys.exit(5)
@@ -170,3 +174,5 @@ Exemplode mensagem:
 
 if __name__ == '__main__':
     main()
+    internal_main(
+        '{\"password\":\"*******\",\"host\":\"smtp.gmail.com\",\"crypt_method\":\"ssl_tls\",\"user\":\"ana@nasajon.com.br\",\"port\":\"465\",\"emails\":[{\"destinatarios\":[\"sergiosilva@nasajon.com.br\"],\"imagens\":[],\"anexos\":[{\"path\":\"C:/Users/Sergio Silva/Downloads/Transformational Leadership.pdf\",\"file_name\":\"anexo.pdf\"}],\"remetente\":\"ana@nasajon.com.br\",\"assunto\":\"Teste Assunto\",\"msg_html\":\"Corpo do e-mail\"}],\"tls_version\":\"v1.2\"}')
