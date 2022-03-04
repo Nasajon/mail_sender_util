@@ -3,7 +3,7 @@ Utilitário para envio de e-mails por linha de comando.
 
 Este utilitário foi desenvolvido por conta da necessidade de atualizar a versão do TLS utilizada pelo ERP Desktop.
 
-Se optou pelo uso da linguagem Python, e pelo fornecimento de um executável, porque está sendo estudada a possibilidade de realizar todos os novos desenvolvimentos do dektop já em python, para permitir reaproveitamento de código para o ERP 4 (WEB).
+Se optou pelo uso da linguagem Python, e pelo fornecimento de um executável, porque está sendo estudada a possibilidade de realizar novos desenvolvimentos do dektop já em python, para permitir reaproveitamento de código para o ERP 4 e/ou JobManager.
 
 Obs.: Esta documentação pressupõe que o programador esteja utilizado ambiente Windows (visto que se destina à integração com o ERP Desktop).
 
