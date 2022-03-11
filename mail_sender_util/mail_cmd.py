@@ -1,4 +1,5 @@
 import argparse
+import base64
 import sys
 
 from mail_sender_util.mail_sender import CryptMethod, MailSender, TLSVersion
@@ -103,7 +104,8 @@ def enviar_emails(entrada: Dict[str, Any]):
         sys.exit(0)
 
 
-def internal_main(json: str):
+def internal_main(json_base64: str):
+    json = base64.b64decode(json_base64).decode('utf-8')
     entrada = json_util.json_loads(json)
     enviar_emails(entrada)
 

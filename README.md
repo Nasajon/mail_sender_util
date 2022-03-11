@@ -83,7 +83,9 @@ Se optou pelo desenvolvimento de um utilitário que receba um JSON como parâmet
 }
 ```
 
-**Obs.: A diferença entre as opções do atributo "crypt_method" é:**
+**Obs. 1: O JSON é recebido como o parâmetro "-j", e deve ser enviado como um string codificada em Base64.**
+
+**Obs. 2: A diferença entre as opções do atributo "crypt_method" é:**
 * "null": Sem criptografia
 * "ssl_tls": A comunicação é criptografada por inteiro (e não apenas o contéudo dos e-mails)
 * "start_tls": A comunicação é criptografada apenas na parte do corpo dos e-mails.
@@ -176,6 +178,10 @@ end;
 ```
 
 **Para correto funcionamento do wrapper, é preciso garantir que o executável "mail_cmd.exe" esteja contido no diretório ```nsbin```. O qual pode ser [encontrado aqui.](https://github.com/Nasajon/mail_sender_util/releases/tag/v0.0.1)**
+
+### Retorno de erros
+
+Caso ocorra um erro no envio, o método "enviar" lança uma exceção do tipo "mail_sender_wrapper.TMailException", e para acessar as informações de erro (conforme apresentadas no JSON de retorno acima), é preciso se utiliza das propriedades "errosGerais" e "errosEmails" do objeto correspondente à exception.
 
 ## Logs
 
