@@ -177,7 +177,7 @@ begin
 end;
 ```
 
-**Para correto funcionamento do wrapper, é preciso garantir que o executável "mail_cmd.exe" esteja contido no diretório ```nsbin```. O qual pode ser [encontrado aqui.](https://github.com/Nasajon/mail_sender_util/releases/tag/v0.0.1)**
+**Para correto funcionamento do wrapper, é preciso garantir que o executável "mail_cmd.exe" esteja contido no diretório ```nsbin```. O qual pode ser [encontrado aqui.](https://github.com/Nasajon/mail_sender_util/releases/tag/v0.0.2)**
 
 ### Retorno de erros
 
