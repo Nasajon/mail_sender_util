@@ -105,7 +105,7 @@ def enviar_emails(entrada: Dict[str, Any]):
 
 
 def internal_main(json_base64: str):
-    json = base64.b64decode(json_base64).decode('utf-8')
+    json = base64.b64decode(json_base64).decode(encoding='ansi')
     entrada = json_util.json_loads(json)
     enviar_emails(entrada)
 
