@@ -176,5 +176,5 @@ Exemplo de mensagem:
 
 if __name__ == '__main__':
     main()
-    internal_main(
-        '{\"password\":\"*******\",\"host\":\"smtp.gmail.com\",\"crypt_method\":\"ssl_tls\",\"user\":\"ana@nasajon.com.br\",\"port\":\"465\",\"emails\":[{\"destinatarios\":[\"sergiosilva@nasajon.com.br\"],\"imagens\":[],\"anexos\":[{\"path\":\"C:/Users/Sergio Silva/Downloads/Transformational Leadership.pdf\",\"file_name\":\"anexo.pdf\"}],\"remetente\":\"ana@nasajon.com.br\",\"assunto\":\"Teste Assunto\",\"msg_html\":\"Corpo do e-mail\"}],\"tls_version\":\"v1.2\"}')
+    # internal_main(
+    #     '{\"password\":\"*******\",\"host\":\"smtp.gmail.com\",\"crypt_method\":\"ssl_tls\",\"user\":\"ana@nasajon.com.br\",\"port\":\"465\",\"emails\":[{\"destinatarios\":[\"sergiosilva@nasajon.com.br\"],\"imagens\":[],\"anexos\":[{\"path\":\"C:/Users/Sergio Silva/Downloads/Transformational Leadership.pdf\",\"file_name\":\"anexo.pdf\"}],\"remetente\":\"ana@nasajon.com.br\",\"assunto\":\"Teste Assunto\",\"msg_html\":\"Corpo do e-mail\"}],\"tls_version\":\"v1.2\"}')
