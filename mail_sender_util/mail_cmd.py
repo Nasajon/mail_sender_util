@@ -104,8 +104,7 @@ def enviar_emails(entrada: Dict[str, Any]):
         sys.exit(0)
 
 
-def internal_main(json_base64: str):
-    json = base64.b64decode(json_base64).decode(encoding='ansi')
+def internal_main(json: str):
     entrada = json_util.json_loads(json)
     enviar_emails(entrada)
 
@@ -168,7 +167,8 @@ Exemplo de mensagem:
         args = parser.parse_args()
 
         if args.json is not None:
-            internal_main(args.json)
+            json = base64.b64decode(args.json).decode(encoding='ansi')
+            internal_main(json)
     except Exception as e:
         print(f'Erro fatal não identificado. Mensagem original do erro {e}')
         sys.exit(5)
@@ -177,4 +177,4 @@ Exemplo de mensagem:
 if __name__ == '__main__':
     main()
     # internal_main(
-    #     '{\"password\":\"*******\",\"host\":\"smtp.gmail.com\",\"crypt_method\":\"ssl_tls\",\"user\":\"ana@nasajon.com.br\",\"port\":\"465\",\"emails\":[{\"destinatarios\":[\"sergiosilva@nasajon.com.br\"],\"imagens\":[],\"anexos\":[{\"path\":\"C:/Users/Sergio Silva/Downloads/Transformational Leadership.pdf\",\"file_name\":\"anexo.pdf\"}],\"remetente\":\"ana@nasajon.com.br\",\"assunto\":\"Teste Assunto\",\"msg_html\":\"Corpo do e-mail\"}],\"tls_version\":\"v1.2\"}')
+    #     '{\"password\":\"*********\",\"host\":\"smtp.gmail.com\",\"crypt_method\":\"ssl_tls\",\"user\":\"ana@nasajon.com.br\",\"port\":\"465\",\"emails\":[{\"destinatarios\":[\"sergiosilva@nasajon.com.br\"],\"imagens\":[],\"anexos\":[{\"path\":\"C:/Users/Sergio Silva/Downloads/Transformational Leadership.pdf\",\"file_name\":\"anexo.pdf\"}],\"remetente\":\"ana@nasajon.com.br\",\"assunto\":\"Teste Assunto\",\"msg_html\":\"Corpo do e-mail\"}],\"tls_version\":\"v1.2\"}')
