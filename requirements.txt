@@ -1,2 +1,2 @@
 nsj-gcf-utils==0.1.9
-pyinstaller===4.1
+pyinstaller==4.10
