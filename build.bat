@@ -1,6 +1,7 @@
 @SET PYTHONPATH=%CD%
 @SET PARAMS=-y --clean^
  --onefile^
+ --windowed^
  -p %PYTHONPATH%^
  --name "mail_cmd"^
  --icon icon.ico^
