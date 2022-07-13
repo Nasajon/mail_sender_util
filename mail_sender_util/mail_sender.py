@@ -173,6 +173,9 @@ class MailSender:
                 if 'dest_copia_oculta' in mail_msg:
                     msg['Bcc'] = ', '.join(mail_msg['dest_copia_oculta'])
 
+                if 'responder_para' in mail_msg:
+                    msg['Reply-To'] = mail_msg['responder_para']
+
                 msg.attach(MIMEText(mail_msg['msg_html'], 'html'))
 
                 # Adicionando as imagens como partes MIME no mensagem de e-mail:

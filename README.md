@@ -50,6 +50,7 @@ Se optou pelo desenvolvimento de um utilitário que receba um JSON como parâmet
         {
             "assunto": "str", // Assunto do e-mail
             "remetente": "str", // Endereço de e-mail do rementente
+            "responder_para": "str", // Endereço de e-mail que a mensagem de resposta deve ser enviada
             "destinatários": [ // Lista dos endereços de e-mails dos destinatários
                 "str",
                 ...
