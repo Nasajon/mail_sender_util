@@ -219,7 +219,7 @@ class MailSender:
 
                         encoders.encode_base64(msgAnexo)
                         msgAnexo.add_header(
-                            'Content-Disposition', "attachment; filename= {}".format(anexo['file_name']))
+                            'Content-Disposition', 'attachment', filename=('utf-8', '', anexo['file_name']))
                         msg.attach(msgAnexo)
 
                 msgs_multipart[i] = msg
