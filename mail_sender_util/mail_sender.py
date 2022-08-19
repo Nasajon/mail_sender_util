@@ -218,8 +218,10 @@ class MailSender:
                             continue
 
                         encoders.encode_base64(msgAnexo)
+                        # msgAnexo.add_header(
+                        #     'Content-Disposition', 'attachment', filename=('utf-8', 'pt-br', anexo['file_name']))
                         msgAnexo.add_header(
-                            'Content-Disposition', 'attachment', filename=('utf-8', '', anexo['file_name']))
+                            'Content-Disposition', "attachment; filename= {}".format(self._convert_filename_to_ascii(anexo['file_name'])))
                         msg.attach(msgAnexo)
 
                 msgs_multipart[i] = msg
@@ -307,6 +309,21 @@ class MailSender:
             # Finalizando a conexão
             if smtp_obj is not None:
                 smtp_obj.quit()
+
+    def _convert_filename_to_ascii(self, value: str) -> str:
+        """
+        Troca os caracteres especiais (não ascii), para caracteres equivalentes, e omite os demais.
+        """
+
+        import unicodedata
+        retorno = unicodedata.normalize("NFD", value)
+        retorno = retorno.encode("ascii", "ignore")
+        retorno = retorno.decode("utf-8")
+
+        if len(retorno) <= 0:
+            raise Exception(f"File name cannot be converted to ascii: {value}")
+
+        return retorno
 
 
 class GmailSender(MailSender):
