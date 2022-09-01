@@ -2,6 +2,7 @@ import enum
 import ssl
 
 from email import encoders
+from email.header import Header
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
@@ -218,10 +219,26 @@ class MailSender:
                             continue
 
                         encoders.encode_base64(msgAnexo)
+
+                        # Escrevendo o nome do arquivo no header
+                        filename = Header(anexo['file_name'], 'utf-8').encode()
+                        parameters = {
+                            'filename*': filename,  # RFC2231
+                            'filename': filename,  # RFC2047
+                        }
+                        msgAnexo.add_header(
+                            'Content-Disposition', 'attachment', **parameters)
+
+                        # import base64
+                        # flname = base64.b64encode(
+                        #     anexo['file_name'].encode('utf-8'))
+                        # flname = str(flname, 'utf-8')
+                        # msgAnexo.add_header(
+                        #     'Content-Disposition', "attachment; filename*=\"=?utf-8?b?{}?=\"; filename=\"=?utf-8?b?{}?=\"".format(flname, flname))
                         # msgAnexo.add_header(
                         #     'Content-Disposition', 'attachment', filename=('utf-8', 'pt-br', anexo['file_name']))
-                        msgAnexo.add_header(
-                            'Content-Disposition', "attachment; filename= {}".format(self._convert_filename_to_ascii(anexo['file_name'])))
+                        # msgAnexo.add_header(
+                        #     'Content-Disposition', "attachment; filename= {}".format(self._convert_filename_to_ascii(anexo['file_name'])))
                         msg.attach(msgAnexo)
 
                 msgs_multipart[i] = msg
