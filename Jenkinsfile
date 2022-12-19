@@ -42,16 +42,27 @@ node('master') {
 
 			def subFolders = currentBuild.displayName.replace(".", "/")
 
-			withAWS(credentials: 'JENKINS_AWS_CREDENTIALS') {
-				def bucket = env.ERP_BUCKET
+			withAWS(credentials: 'JENKINS_SP_UPLOAD', region: 'sa-east-1') {
+				def bucket = env.BUCKET_CDN
 
 				//Upload do artefato
 				s3Upload(
 					file: "${env.WORKSPACE}\\output\\bin\\${artifactId}.exe",
 					bucket:"${bucket}",
-					path:"erp-update/artifacts/${artifactId}/${subFolders}/${artifactId}.exe",
-					acl:'PublicRead')
+					path:"${artifactId}/" + "${artifactId}_${currentBuild.displayName}.exe"
+				)
 			}
+
+			//withAWS(credentials: 'JENKINS_AWS_CREDENTIALS') {
+			//	def bucket = env.ERP_BUCKET
+
+				//Upload do artefato
+			//	s3Upload(
+			//		file: "${env.WORKSPACE}\\output\\bin\\${artifactId}.exe",
+			//		bucket:"${bucket}",
+			//		path:"erp-update/artifacts/${artifactId}/${subFolders}/${artifactId}.exe",
+			//		acl:'PublicRead')
+			//}
 
 			def checksum = powershell(
 				returnStdout: true,
