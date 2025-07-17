@@ -10,6 +10,7 @@ from email.mime.text import MIMEText
 from mail_sender_util.exception import TLSVersionMissingExcpetion
 from smtplib import SMTP, SMTP_SSL, SMTPRecipientsRefused, SMTPSenderRefused
 from typing import Any, Dict, List, Tuple
+from email.utils import make_msgid
 
 
 class CryptMethod(enum.Enum):
@@ -167,6 +168,9 @@ class MailSender:
                 msg['From'] = mail_msg['remetente']
                 msg['To'] = ', '.join(mail_msg['destinatarios'])
                 msg['Subject'] = mail_msg['assunto']
+
+                dominio = mail_msg['remetente'].split('@')[1]
+                msg['Message-ID'] = make_msgid(domain=dominio)
 
                 if 'dest_copia' in mail_msg:
                     msg['Cc'] = ', '.join(mail_msg['dest_copia'])
