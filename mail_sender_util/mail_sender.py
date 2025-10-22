@@ -168,6 +168,7 @@ class MailSender:
                 msg['From'] = mail_msg['remetente']
                 msg['To'] = ', '.join(mail_msg['destinatarios'])
                 msg['Subject'] = mail_msg['assunto']
+                msg['Date'] = formatdate(localtime=True)
 
                 dominio = mail_msg['remetente'].split('@')[1]
                 msg['Message-ID'] = make_msgid(domain=dominio)
