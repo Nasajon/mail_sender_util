@@ -11,6 +11,8 @@ from mail_sender_util.exception import TLSVersionMissingExcpetion
 from smtplib import SMTP, SMTP_SSL, SMTPRecipientsRefused, SMTPSenderRefused
 from typing import Any, Dict, List, Tuple
 from email.utils import make_msgid
+from email.utils import formatdate
+
 
 
 class CryptMethod(enum.Enum):
