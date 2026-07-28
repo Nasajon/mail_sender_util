@@ -167,7 +167,11 @@ Exemplo de mensagem:
         args = parser.parse_args()
 
         if args.json is not None:
-            json = base64.b64decode(args.json).decode(encoding='ansi')
+            raw_json = base64.b64decode(args.json)
+            try:
+                json = raw_json.decode(encoding='utf-8')
+            except UnicodeDecodeError:
+                json = raw_json.decode(encoding='ansi')
             internal_main(json)
     except Exception as e:
         print(f'Erro fatal não identificado. Mensagem original do erro {e}')

@@ -181,7 +181,9 @@ class MailSender:
                 if 'dest_copia_oculta' in mail_msg:
                     msg['Bcc'] = ', '.join(mail_msg['dest_copia_oculta'])
 
-                msg.attach(MIMEText(mail_msg['msg_html'], 'html'))
+                msg.attach(MIMEText(
+                    mail_msg['msg_html'], 'html', 'utf-8'
+                ))
 
                 # Adicionando as imagens como partes MIME no mensagem de e-mail:
                 # Onde o ID de cada parte é de acordo com a tupla da imagem, o caminho também

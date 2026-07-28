@@ -113,6 +113,6 @@ def generateVersionNumber() {
 		.replaceAll("__VERSION_INFO1__", version.replace(".", ", "))
 		.replaceAll("__VERSION_INFO2__", version)
 
-	writeFile file: "${env.WORKSPACE}\\output\\VersionInfo", text: version
-	writeFile file: "${env.WORKSPACE}\\output\\VersionInfo2", text: file_version_template
+	writeFile file: "${env.WORKSPACE}\\output\\VersionInfo", text: version, encoding: "UTF-8"
+	writeFile file: "${env.WORKSPACE}\\output\\VersionInfo2", text: file_version_template, encoding: "UTF-8"
 }
