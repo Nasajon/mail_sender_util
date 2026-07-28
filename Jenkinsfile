@@ -107,7 +107,10 @@ def generateVersionNumber() {
 
 	currentBuild.displayName = version
 
-	def file_version_template = readFile("${env.WORKSPACE}\\mail_sender_util\\version_info.txt")
+	def file_version_template = readFile(
+		file: "${env.WORKSPACE}\\mail_sender_util\\version_info.txt",
+		encoding: "UTF-8"
+	)
 
 	file_version_template = file_version_template
 		.replaceAll("__VERSION_INFO1__", version.replace(".", ", "))

@@ -8,6 +8,12 @@ from nsj_gcf_utils import json_util
 from typing import Any, Dict, List
 
 
+def configurar_streams_utf8():
+    for stream in (sys.stdout, sys.stderr):
+        if stream is not None and hasattr(stream, 'reconfigure'):
+            stream.reconfigure(encoding='utf-8')
+
+
 def formata_erros(erros_msg: Dict[int, List[str]]):
     erros = {}
 
@@ -110,6 +116,8 @@ def internal_main(json: str):
 
 
 def main():
+    configurar_streams_utf8()
+
     try:
         # Initialize parser
         parser = argparse.ArgumentParser(
