@@ -96,6 +96,8 @@ def generateVersionNumber() {
 
 	if (branchName == "master") {
 		version = "2.${env.CURRENT_SPRINT}.0.${env.BUILD_NUMBER}"
+	} else if (branchName == "v2.utf8") {
+		version = "2.9998.${env.BUILD_NUMBER}.0"
 	} else if (branchName.startsWith("v2.")) {
 		def sprint = branchName.substring(3)
 		version = "2.${sprint}.${env.BUILD_NUMBER}.0"
