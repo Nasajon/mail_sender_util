@@ -170,16 +170,19 @@ Exemplo de mensagem:
         # Adding optional argument
         parser.add_argument(
             "-j", "--json", help="JSON de entrada, com os parâmetros necessários ao envio do e-mail")
+        parser.add_argument(
+            "--json-encoding",
+            choices=("cp1252", "utf-8"),
+            default="cp1252",
+            help="Encoding do JSON antes da conversão para Base64"
+        )
 
         # Read arguments from command line
         args = parser.parse_args()
 
         if args.json is not None:
             raw_json = base64.b64decode(args.json)
-            try:
-                json = raw_json.decode(encoding='utf-8')
-            except UnicodeDecodeError:
-                json = raw_json.decode(encoding='ansi')
+            json = raw_json.decode(encoding=args.json_encoding)
             internal_main(json)
     except Exception as e:
         print(f'Erro fatal não identificado. Mensagem original do erro {e}')
