@@ -173,7 +173,7 @@ Exemplo de mensagem:
         parser.add_argument(
             "--json-encoding",
             choices=("cp1252", "utf-8"),
-            default="cp1252",
+            default="utf-8",
             help="Encoding do JSON antes da conversão para Base64"
         )
 
