@@ -96,6 +96,8 @@ def generateVersionNumber() {
 
 	if (branchName == "master") {
 		version = "2.${env.CURRENT_SPRINT}.0.${env.BUILD_NUMBER}"
+	} else if (branchName == "v2.utf8") {
+		version = "2.9998.${env.BUILD_NUMBER}.0"
 	} else if (branchName.startsWith("v2.")) {
 		def sprint = branchName.substring(3)
 		version = "2.${sprint}.${env.BUILD_NUMBER}.0"
@@ -107,12 +109,15 @@ def generateVersionNumber() {
 
 	currentBuild.displayName = version
 
-	def file_version_template = readFile("${env.WORKSPACE}\\mail_sender_util\\version_info.txt")
+	def file_version_template = readFile(
+		file: "${env.WORKSPACE}\\mail_sender_util\\version_info.txt",
+		encoding: "UTF-8"
+	)
 
 	file_version_template = file_version_template
 		.replaceAll("__VERSION_INFO1__", version.replace(".", ", "))
 		.replaceAll("__VERSION_INFO2__", version)
 
-	writeFile file: "${env.WORKSPACE}\\output\\VersionInfo", text: version
-	writeFile file: "${env.WORKSPACE}\\output\\VersionInfo2", text: file_version_template
+	writeFile file: "${env.WORKSPACE}\\output\\VersionInfo", text: version, encoding: "UTF-8"
+	writeFile file: "${env.WORKSPACE}\\output\\VersionInfo2", text: file_version_template, encoding: "UTF-8"
 }
