@@ -24,7 +24,10 @@ node('master') {
 			generateVersionNumber()
 
 			dir("${artifactBuildPath}") {
-				bat 'jenkins_build.bat'
+				// PyInstaller --clean must not remove another parallel job's cache.
+				withEnv(["PYINSTALLER_CONFIG_DIR=${env.WORKSPACE}\\pyinstaller-cache"]) {
+					bat 'jenkins_build.bat'
+				}
 			}
 		}
 		
