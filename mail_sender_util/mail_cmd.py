@@ -8,6 +8,12 @@ from nsj_gcf_utils import json_util
 from typing import Any, Dict, List
 
 
+def configurar_streams_utf8():
+    for stream in (sys.stdout, sys.stderr):
+        if stream is not None and hasattr(stream, 'reconfigure'):
+            stream.reconfigure(encoding='utf-8')
+
+
 def formata_erros(erros_msg: Dict[int, List[str]]):
     erros = {}
 
@@ -110,6 +116,8 @@ def internal_main(json: str):
 
 
 def main():
+    configurar_streams_utf8()
+
     try:
         # Initialize parser
         parser = argparse.ArgumentParser(
@@ -162,12 +170,19 @@ Exemplo de mensagem:
         # Adding optional argument
         parser.add_argument(
             "-j", "--json", help="JSON de entrada, com os parâmetros necessários ao envio do e-mail")
+        parser.add_argument(
+            "--json-encoding",
+            choices=("cp1252", "utf-8"),
+            default="utf-8",
+            help="Encoding do JSON antes da conversão para Base64"
+        )
 
         # Read arguments from command line
         args = parser.parse_args()
 
         if args.json is not None:
-            json = base64.b64decode(args.json).decode(encoding='ansi')
+            raw_json = base64.b64decode(args.json)
+            json = raw_json.decode(encoding=args.json_encoding)
             internal_main(json)
     except Exception as e:
         print(f'Erro fatal não identificado. Mensagem original do erro {e}')
